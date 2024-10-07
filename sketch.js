@@ -1,7 +1,7 @@
 let regions = [];
 let selectedRegion = null;
 let correctAnswers = ["Region1", "Region2", "Region3", "Region4"]; // Replace with actual region names
-let svgFiles = ["WHAP/path3", "WHAP/path5", "WHAP/path6", "WHAP/path7"]; // Add paths to your SVG files
+let svgFiles = ["WHAP/path3.svg", "WHAP/path5.svg", "WHAP/path6.svg", "WHAP/path7.svg", "WHAP/path8.svg", "WHAP/path9.svg", "WHAP/path10.svg", "WHAP/path11.svg", "WHAP/path12.svg", "WHAP/path13.svg", "WHAP/path14.svg", "WHAP/path15.svg", "WHAP/path16.svg", "WHAP/path17.svg", "WHAP/path18.svg", "WHAP/path19.svg", "WHAP/path20.svg", "WHAP/path21.svg", "WHAP/path22.svg", "WHAP/path23.svg", "WHAP/path24.svg", "WHAP/path25.svg", "WHAP/path26.svg", "WHAP/path27.svg", "WHAP/path28.svg", "WHAP/path29.svg", "WHAP/path30.svg", "WHAP/path31.svg", "WHAP/path32.svg", "WHAP/path33.svg"]; // Add paths to your SVG files
 let svgImages = [];
 
 function preload() {
