@@ -12,13 +12,39 @@ function preload() {
 }
 
 function setup() {
-  createCanvas(800, 600);
+  createCanvas(1123, 794);
 
   // Define regions with their names and corresponding SVG images
   regions.push({ name: "Region1", image: svgImages[0], state: "default" });
   regions.push({ name: "Region2", image: svgImages[1], state: "default" });
   regions.push({ name: "Region3", image: svgImages[2], state: "default" });
   regions.push({ name: "Region4", image: svgImages[3], state: "default" });
+  regions.push({ name: "Region1", image: svgImages[4], state: "default" });
+  regions.push({ name: "Region2", image: svgImages[5], state: "default" });
+  regions.push({ name: "Region3", image: svgImages[6], state: "default" });
+  regions.push({ name: "Region4", image: svgImages[7], state: "default" });
+  regions.push({ name: "Region1", image: svgImages[8], state: "default" });
+  regions.push({ name: "Region2", image: svgImages[9], state: "default" });
+  regions.push({ name: "Region3", image: svgImages[10], state: "default" });
+  regions.push({ name: "Region4", image: svgImages[11], state: "default" });
+  regions.push({ name: "Region1", image: svgImages[12], state: "default" });
+  regions.push({ name: "Region2", image: svgImages[13], state: "default" });
+  regions.push({ name: "Region3", image: svgImages[14], state: "default" });
+  regions.push({ name: "Region4", image: svgImages[15], state: "default" });
+  regions.push({ name: "Region1", image: svgImages[16], state: "default" });
+  regions.push({ name: "Region2", image: svgImages[17], state: "default" });
+  regions.push({ name: "Region3", image: svgImages[18], state: "default" });
+  regions.push({ name: "Region4", image: svgImages[19], state: "default" });
+  regions.push({ name: "Region1", image: svgImages[20], state: "default" });
+  regions.push({ name: "Region2", image: svgImages[21], state: "default" });
+  regions.push({ name: "Region3", image: svgImages[22], state: "default" });
+  regions.push({ name: "Region4", image: svgImages[23], state: "default" });
+  regions.push({ name: "Region1", image: svgImages[24], state: "default" });
+  regions.push({ name: "Region2", image: svgImages[25], state: "default" });
+  regions.push({ name: "Region3", image: svgImages[26], state: "default" });
+  regions.push({ name: "Region4", image: svgImages[27], state: "default" });
+  regions.push({ name: "Region1", image: svgImages[28], state: "default" });
+  regions.push({ name: "Region2", image: svgImages[29], state: "default" });
 }
 
 function draw() {
