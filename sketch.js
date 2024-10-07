@@ -153,7 +153,7 @@ function mousePressed() {
 // Function to check if the mouse click is inside the region
 function isMouseInRegion(region) {
   let pathData = region.path;
-  
+
   // Ensure pathData is defined and not empty
   if (!pathData || pathData.trim() === '') {
     console.warn(`Path data is empty or undefined for region: ${region.name}`);
@@ -166,20 +166,42 @@ function isMouseInRegion(region) {
 
   // Use the ray-casting algorithm to check if mouse is inside the polygon
   let commands = split(pathData, ' '); // Split path data
-  for (let i = 0, j = commands.length - 1; i < commands.length; j = i++) {
-    let coordsA = commands[i].substring(1).split(',');
-    let coordsB = commands[j].substring(1).split(',');
+  let currentPos = createVector(0, 0); // Store the current position for relative commands
 
-    // Check if coords are valid
-    if (coordsA.length < 2 || coordsB.length < 2) {
-      console.warn(`Invalid coordinates for path command: ${commands[i]} or ${commands[j]}`);
+  for (let i = 0, j = commands.length - 1; i < commands.length; j = i++) {
+    let command = commands[i];
+
+    // Check for commands and parse accordingly
+    let coords;
+    if (command.startsWith('M') || command.startsWith('L') || command.startsWith('C')) {
+      coords = command.substring(1).split(',').map(parseFloat);
+    } else if (command.startsWith('m') || command.startsWith('l') || command.startsWith('c')) {
+      coords = command.substring(1).split(',').map(parseFloat);
+      // For relative commands, add currentPos to the coordinates
+      for (let k = 0; k < coords.length; k += 2) {
+        coords[k] += currentPos.x; // Update x coordinate
+        coords[k + 1] += currentPos.y; // Update y coordinate
+      }
+    } else if (command === 'Z' || command === 'z') {
+      // Skip processing for Z command, it's only for closing the path
+      continue;
+    } else {
+      console.warn(`Invalid path command: ${command}`);
+      continue; // Skip invalid commands
+    }
+
+    // Validate coords length
+    if (coords.length < 2) {
+      console.warn(`Invalid coordinates for path command: ${command}`);
       continue; // Skip invalid coordinates
     }
 
-    let xi = parseFloat(coordsA[0]);
-    let yi = parseFloat(coordsA[1]);
-    let xj = parseFloat(coordsB[0]);
-    let yj = parseFloat(coordsB[1]);
+    let xi = coords[0];
+    let yi = coords[1];
+    currentPos.set(xi, yi); // Update current position
+
+    let xj = (j >= 0) ? commands[j].substring(1).split(',').map(parseFloat)[0] : xi;
+    let yj = (j >= 0) ? commands[j].substring(1).split(',').map(parseFloat)[1] : yi;
 
     let intersect = ((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
     if (intersect) inside = !inside;
@@ -187,7 +209,6 @@ function isMouseInRegion(region) {
 
   return inside;
 }
-
 
 function handleKeyPress(event) {
   if (event.key === "Enter") {
