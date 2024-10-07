@@ -7,7 +7,27 @@ let svgImages = [];
 function preload() {
   // Load SVG files
   for (let file of svgFiles) {
-    svgImages.push(loadImage(file));
+    loadStrings(file, parseSVG);
+  }
+}
+
+function parseSVG(data) {
+  // Combine loaded strings into a single SVG string
+  let svgString = data.join('\n');
+
+  // Parse the SVG to extract path data
+  let parser = new DOMParser();
+  let svgDoc = parser.parseFromString(svgString, "image/svg+xml");
+  let paths = svgDoc.getElementsByTagName('path');
+
+  for (let i = 0; i < paths.length; i++) {
+    let path = paths[i];
+    let d = path.getAttribute('d'); // Get the path data
+    regions.push({
+      name: `Region${(regions.length % 4) + 1}`, // Assign names dynamically
+      path: d,
+      state: "default"
+    });
   }
 }
 
@@ -63,9 +83,47 @@ function draw() {
       tint(255, 0, 0); // Red
     }
 
-    // Draw the SVG image
-    image(region.image, 0, 0); // Positioning may need to be adjusted
+    // Draw the path for the region
+    drawSVGPath(region.path);
   }
+}
+
+function drawSVGPath(pathData) {
+  beginShape();
+  let commands = split(pathData, ' '); // Split the path data by spaces
+  let currentPos = createVector(0, 0); // Starting position for 'M'
+  let controlPoint1 = createVector(0, 0); // First control point for curve
+  let controlPoint2 = createVector(0, 0); // Second control point for curve
+
+  for (let command of commands) {
+    if (command.startsWith('M')) {
+      // Move to command
+      let coords = command.substring(1).split(',');
+      currentPos.set(parseFloat(coords[0]), parseFloat(coords[1]));
+      vertex(currentPos.x, currentPos.y);
+    } else if (command.startsWith('L')) {
+      // Line to command
+      let coords = command.substring(1).split(',');
+      currentPos.set(parseFloat(coords[0]), parseFloat(coords[1]));
+      vertex(currentPos.x, currentPos.y);
+    } else if (command.startsWith('C')) {
+      // Cubic Bezier curve command
+      let coords = command.substring(1).split(',');
+      controlPoint1.set(parseFloat(coords[0]), parseFloat(coords[1]));
+      controlPoint2.set(parseFloat(coords[2]), parseFloat(coords[3]));
+      let endPoint = createVector(parseFloat(coords[4]), parseFloat(coords[5]));
+
+      // Draw the cubic bezier curve
+      vertex(controlPoint1.x, controlPoint1.y);
+      vertex(controlPoint2.x, controlPoint2.y);
+      vertex(endPoint.x, endPoint.y);
+      // You may want to interpolate points along the curve instead of just using vertex()
+      // For a better curve, consider using curveVertex() or similar techniques
+    }
+    // Add more commands (like Q for quadratic curves) as necessary
+  }
+
+  endShape(CLOSE);
 }
 
 function mousePressed() {
@@ -98,19 +156,26 @@ function mousePressed() {
 
 // Function to check if the mouse click is inside the region
 function isMouseInRegion(region) {
-  let img = region.image;
-  img.loadPixels();
-
   let x = mouseX;
   let y = mouseY;
+  let inside = false;
 
-  if (x < 0 || x >= img.width || y < 0 || y >= img.height) {
-    return false; // Outside image bounds
+  // Use the ray-casting algorithm to check if mouse is inside the polygon
+  let commands = split(region.path, ' ');
+  for (let i = 0, j = commands.length - 1; i < commands.length; j = i++) {
+    let coordsA = commands[i].substring(1).split(',');
+    let coordsB = commands[j].substring(1).split(',');
+
+    let xi = parseFloat(coordsA[0]);
+    let yi = parseFloat(coordsA[1]);
+    let xj = parseFloat(coordsB[0]);
+    let yj = parseFloat(coordsB[1]);
+
+    let intersect = ((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
   }
 
-  // Check the alpha channel to see if the pixel is not transparent
-  let index = (x + y * img.width) * 4; // 4 channels per pixel
-  return img.pixels[index + 3] > 0; // Check if pixel is not transparent
+  return inside;
 }
 
 function handleKeyPress(event) {
