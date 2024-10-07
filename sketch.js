@@ -12,10 +12,7 @@ function preload() {
 }
 
 function parseSVG(data) {
-  // Combine loaded strings into a single SVG string
   let svgString = data.join('\n');
-
-  // Parse the SVG to extract path data
   let parser = new DOMParser();
   let svgDoc = parser.parseFromString(svgString, "image/svg+xml");
   let paths = svgDoc.getElementsByTagName('path');
@@ -23,17 +20,22 @@ function parseSVG(data) {
   for (let i = 0; i < paths.length; i++) {
     let path = paths[i];
     let d = path.getAttribute('d'); // Get the path data
-    regions.push({
-      name: `Region${(regions.length % 4) + 1}`, // Assign names dynamically
-      path: d,
-      state: "default"
-    });
+    if (d) { // Check if d is not null
+      regions.push({
+        name: `Region${(regions.length % 4) + 1}`,
+        path: d,
+        state: "default"
+      });
+    } else {
+      console.warn(`No path data found for path index ${i}`);
+    }
   }
 }
 
+
 function setup() {
   createCanvas(1123, 794);
-
+/*
   // Define regions with their names and corresponding SVG images
   regions.push({ name: "Region1", image: svgImages[0], state: "default" });
   regions.push({ name: "Region2", image: svgImages[1], state: "default" });
@@ -65,7 +67,8 @@ function setup() {
   regions.push({ name: "Region4", image: svgImages[27], state: "default" });
   regions.push({ name: "Region1", image: svgImages[28], state: "default" });
   regions.push({ name: "Region2", image: svgImages[29], state: "default" });
-}
+*/
+  }
 
 function draw() {
   background(220);
@@ -90,41 +93,34 @@ function draw() {
 
 function drawSVGPath(pathData) {
   beginShape();
-  let commands = split(pathData, ' '); // Split the path data by spaces
-  let currentPos = createVector(0, 0); // Starting position for 'M'
-  let controlPoint1 = createVector(0, 0); // First control point for curve
-  let controlPoint2 = createVector(0, 0); // Second control point for curve
+  let commands = split(pathData, ' ');
+  let currentPos = createVector(0, 0);
 
   for (let command of commands) {
     if (command.startsWith('M')) {
-      // Move to command
       let coords = command.substring(1).split(',');
       currentPos.set(parseFloat(coords[0]), parseFloat(coords[1]));
       vertex(currentPos.x, currentPos.y);
     } else if (command.startsWith('L')) {
-      // Line to command
       let coords = command.substring(1).split(',');
       currentPos.set(parseFloat(coords[0]), parseFloat(coords[1]));
       vertex(currentPos.x, currentPos.y);
     } else if (command.startsWith('C')) {
-      // Cubic Bezier curve command
       let coords = command.substring(1).split(',');
-      controlPoint1.set(parseFloat(coords[0]), parseFloat(coords[1]));
-      controlPoint2.set(parseFloat(coords[2]), parseFloat(coords[3]));
+      let controlPoint1 = createVector(parseFloat(coords[0]), parseFloat(coords[1]));
+      let controlPoint2 = createVector(parseFloat(coords[2]), parseFloat(coords[3]));
       let endPoint = createVector(parseFloat(coords[4]), parseFloat(coords[5]));
 
-      // Draw the cubic bezier curve
-      vertex(controlPoint1.x, controlPoint1.y);
-      vertex(controlPoint2.x, controlPoint2.y);
-      vertex(endPoint.x, endPoint.y);
-      // You may want to interpolate points along the curve instead of just using vertex()
-      // For a better curve, consider using curveVertex() or similar techniques
+      // Draw the cubic Bezier curve
+      curveVertex(controlPoint1.x, controlPoint1.y);
+      curveVertex(controlPoint2.x, controlPoint2.y);
+      curveVertex(endPoint.x, endPoint.y);
     }
-    // Add more commands (like Q for quadratic curves) as necessary
   }
 
   endShape(CLOSE);
 }
+
 
 function mousePressed() {
   let regionClicked = false;
@@ -156,15 +152,29 @@ function mousePressed() {
 
 // Function to check if the mouse click is inside the region
 function isMouseInRegion(region) {
+  let pathData = region.path;
+  
+  // Ensure pathData is defined and not empty
+  if (!pathData || pathData.trim() === '') {
+    console.warn(`Path data is empty or undefined for region: ${region.name}`);
+    return false; // Early exit if path data is invalid
+  }
+
   let x = mouseX;
   let y = mouseY;
   let inside = false;
 
   // Use the ray-casting algorithm to check if mouse is inside the polygon
-  let commands = split(region.path, ' ');
+  let commands = split(pathData, ' '); // Split path data
   for (let i = 0, j = commands.length - 1; i < commands.length; j = i++) {
     let coordsA = commands[i].substring(1).split(',');
     let coordsB = commands[j].substring(1).split(',');
+
+    // Check if coords are valid
+    if (coordsA.length < 2 || coordsB.length < 2) {
+      console.warn(`Invalid coordinates for path command: ${commands[i]} or ${commands[j]}`);
+      continue; // Skip invalid coordinates
+    }
 
     let xi = parseFloat(coordsA[0]);
     let yi = parseFloat(coordsA[1]);
@@ -177,6 +187,7 @@ function isMouseInRegion(region) {
 
   return inside;
 }
+
 
 function handleKeyPress(event) {
   if (event.key === "Enter") {
