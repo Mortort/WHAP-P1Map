@@ -4,204 +4,130 @@ let correctAnswers = ["Region1", "Region2", "Region3", "Region4"]; // Replace wi
 let svgFiles = ["WHAP/path3.svg", "WHAP/path5.svg", "WHAP/path6.svg", "WHAP/path7.svg", "WHAP/path8.svg", "WHAP/path9.svg", "WHAP/path10.svg", "WHAP/path11.svg", "WHAP/path12.svg", "WHAP/path13.svg", "WHAP/path14.svg", "WHAP/path15.svg", "WHAP/path16.svg", "WHAP/path17.svg", "WHAP/path18.svg", "WHAP/path19.svg", "WHAP/path20.svg", "WHAP/path21.svg", "WHAP/path22.svg", "WHAP/path23.svg", "WHAP/path24.svg", "WHAP/path25.svg", "WHAP/path26.svg", "WHAP/path27.svg", "WHAP/path28.svg", "WHAP/path29.svg", "WHAP/path30.svg", "WHAP/path31.svg", "WHAP/path32.svg", "WHAP/path33.svg"]; // Add paths to your SVG files
 let svgImages = [];
 
-function preload() {
-  // Load SVG files
-  for (let file of svgFiles) {
-    loadStrings(file, parseSVG);
-  }
+function loadSVG(path) {
+  return new Promise((resolve, reject) => {
+    fetch(path)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.text();
+      })
+      .then(data => {
+        const parser = new DOMParser();
+        const svgDoc = parser.parseFromString(data, 'image/svg+xml');
+        const paths = svgDoc.querySelectorAll('path');
+        let allVertices = [];
+        
+        paths.forEach(path => {
+          const d = path.getAttribute('d');
+          const vertices = parsePathData(d);
+          allVertices = allVertices.concat(vertices); // Combine all vertices
+        });
+
+        resolve(allVertices);
+      })
+      .catch(reject);
+  });
 }
 
-function parseSVG(data) {
-  let svgString = data.join('\n');
-  let parser = new DOMParser();
-  let svgDoc = parser.parseFromString(svgString, "image/svg+xml");
-  let paths = svgDoc.getElementsByTagName('path');
+function parsePathData(d) {
+  const commands = d.match(/[a-zA-Z][^a-zA-Z]*/g);
+  let vertices = [];
+  let currentX = 0, currentY = 0;
 
-  for (let i = 0; i < paths.length; i++) {
-    let path = paths[i];
-    let d = path.getAttribute('d'); // Get the path data
-    if (d) { // Check if d is not null
-      regions.push({
-        name: `Region${(regions.length % 4) + 1}`,
-        path: d,
-        state: "default"
-      });
-    } else {
-      console.warn(`No path data found for path index ${i}`);
+  commands.forEach(command => {
+    const type = command[0];
+    const values = command.slice(1).trim().split(/[\s,]+/).map(Number);
+    
+    for (let i = 0; i < values.length; i += 2) {
+      if (type === 'M' || type === 'm') {
+        currentX = (type === 'M' ? values[i] : currentX + values[i]);
+        currentY = (type === 'M' ? values[i + 1] : currentY + values[i + 1]);
+        vertices.push({ x: currentX, y: currentY });
+      } else if (type === 'L' || type === 'l') {
+        currentX = (type === 'L' ? values[i] : currentX + values[i]);
+        currentY = (type === 'L' ? values[i + 1] : currentY + values[i + 1]);
+        vertices.push({ x: currentX, y: currentY });
+      } else if (type === 'C' || type === 'c') {
+        // Cubic Bezier curve, using the end point
+        currentX = (type === 'C' ? values[i + 4] : currentX + values[i + 4]);
+        currentY = (type === 'C' ? values[i + 5] : currentY + values[i + 5]);
+        vertices.push({ x: currentX, y: currentY });
+      }
+      // Add more commands as necessary
     }
-  }
+  });
+  
+  return vertices;
 }
-
 
 function setup() {
   createCanvas(1123, 794);
-/*
-  // Define regions with their names and corresponding SVG images
-  regions.push({ name: "Region1", image: svgImages[0], state: "default" });
-  regions.push({ name: "Region2", image: svgImages[1], state: "default" });
-  regions.push({ name: "Region3", image: svgImages[2], state: "default" });
-  regions.push({ name: "Region4", image: svgImages[3], state: "default" });
-  regions.push({ name: "Region1", image: svgImages[4], state: "default" });
-  regions.push({ name: "Region2", image: svgImages[5], state: "default" });
-  regions.push({ name: "Region3", image: svgImages[6], state: "default" });
-  regions.push({ name: "Region4", image: svgImages[7], state: "default" });
-  regions.push({ name: "Region1", image: svgImages[8], state: "default" });
-  regions.push({ name: "Region2", image: svgImages[9], state: "default" });
-  regions.push({ name: "Region3", image: svgImages[10], state: "default" });
-  regions.push({ name: "Region4", image: svgImages[11], state: "default" });
-  regions.push({ name: "Region1", image: svgImages[12], state: "default" });
-  regions.push({ name: "Region2", image: svgImages[13], state: "default" });
-  regions.push({ name: "Region3", image: svgImages[14], state: "default" });
-  regions.push({ name: "Region4", image: svgImages[15], state: "default" });
-  regions.push({ name: "Region1", image: svgImages[16], state: "default" });
-  regions.push({ name: "Region2", image: svgImages[17], state: "default" });
-  regions.push({ name: "Region3", image: svgImages[18], state: "default" });
-  regions.push({ name: "Region4", image: svgImages[19], state: "default" });
-  regions.push({ name: "Region1", image: svgImages[20], state: "default" });
-  regions.push({ name: "Region2", image: svgImages[21], state: "default" });
-  regions.push({ name: "Region3", image: svgImages[22], state: "default" });
-  regions.push({ name: "Region4", image: svgImages[23], state: "default" });
-  regions.push({ name: "Region1", image: svgImages[24], state: "default" });
-  regions.push({ name: "Region2", image: svgImages[25], state: "default" });
-  regions.push({ name: "Region3", image: svgImages[26], state: "default" });
-  regions.push({ name: "Region4", image: svgImages[27], state: "default" });
-  regions.push({ name: "Region1", image: svgImages[28], state: "default" });
-  regions.push({ name: "Region2", image: svgImages[29], state: "default" });
-*/
+
+  // Loop through the svgFiles array
+  for (let i = 0; i < svgFiles.length; i++) {
+    const filePath = svgFiles[i];
+    const regionName = `Region${i + 1}`; // Assuming naming convention "Region1", "Region2", etc.
+
+    // Load the SVG and add the region with its name and vertices
+    loadSVG(filePath).then(vertices => {
+      regions.push({
+        name: regionName,
+        vertices: vertices // Use the parsed vertices
+      });
+      console.log(`Loaded ${regionName}:`, vertices);
+    }).catch(err => {
+      console.error(`Error loading SVG from ${filePath}:`, err);
+    });
   }
+}
+
 
 function draw() {
   background(220);
 
-  // Draw the SVG images with color based on their state
+  // Draw the vector-shaped regions
   for (let region of regions) {
-    // Set the color based on the state
-    if (region.state === "default") {
-      tint(255); // Original color
-    } else if (region.state === "selected") {
-      tint(255, 255, 0); // Yellow
-    } else if (region.state === "correct") {
-      tint(0, 255, 0); // Green
-    } else if (region.state === "incorrect") {
-      tint(255, 0, 0); // Red
+    fill(200, 100, 100);
+    beginShape();
+    for (let v of region.vertices) {
+      vertex(v.x, v.y);
     }
+    endShape(CLOSE);
 
-    // Draw the path for the region
-    drawSVGPath(region.path);
-  }
-}
-
-function drawSVGPath(pathData) {
-  beginShape();
-  let commands = split(pathData, ' ');
-  let currentPos = createVector(0, 0);
-
-  for (let command of commands) {
-    if (command.startsWith('M')) {
-      let coords = command.substring(1).split(',');
-      currentPos.set(parseFloat(coords[0]), parseFloat(coords[1]));
-      vertex(currentPos.x, currentPos.y);
-    } else if (command.startsWith('L')) {
-      let coords = command.substring(1).split(',');
-      currentPos.set(parseFloat(coords[0]), parseFloat(coords[1]));
-      vertex(currentPos.x, currentPos.y);
-    } else if (command.startsWith('C')) {
-      let coords = command.substring(1).split(',');
-      let controlPoint1 = createVector(parseFloat(coords[0]), parseFloat(coords[1]));
-      let controlPoint2 = createVector(parseFloat(coords[2]), parseFloat(coords[3]));
-      let endPoint = createVector(parseFloat(coords[4]), parseFloat(coords[5]));
-
-      // Draw the cubic Bezier curve
-      curveVertex(controlPoint1.x, controlPoint1.y);
-      curveVertex(controlPoint2.x, controlPoint2.y);
-      curveVertex(endPoint.x, endPoint.y);
+    // Highlight selected region
+    if (selectedRegion === region) {
+      fill(100, 200, 100);
+      beginShape();
+      for (let v of region.vertices) {
+        vertex(v.x, v.y);
+      }
+      endShape(CLOSE);
     }
   }
-
-  endShape(CLOSE);
 }
-
 
 function mousePressed() {
-  let regionClicked = false;
-
   for (let region of regions) {
     if (isMouseInRegion(region)) {
-      regionClicked = true;
-
-      // If another region is selected, reset its state
-      if (selectedRegion && selectedRegion !== region) {
-        if (selectedRegion.state === "selected") {
-          selectedRegion.state = "default"; // Reset previous selection
-        }
-      }
-
-      // Set the new selected region to yellow
       selectedRegion = region;
-      region.state = "selected"; // Highlight the new selected region
       document.getElementById("answer").focus();
     }
-  }
-
-  // If no region is clicked, reset the previously selected region to grey
-  if (!regionClicked && selectedRegion) {
-    selectedRegion.state = "default";
-    selectedRegion = null;
   }
 }
 
 // Function to check if the mouse click is inside the region
 function isMouseInRegion(region) {
-  let pathData = region.path;
-
-  // Ensure pathData is defined and not empty
-  if (!pathData || pathData.trim() === '') {
-    console.warn(`Path data is empty or undefined for region: ${region.name}`);
-    return false; // Early exit if path data is invalid
-  }
-
   let x = mouseX;
   let y = mouseY;
   let inside = false;
+  let vertices = region.vertices;
 
-  // Use the ray-casting algorithm to check if mouse is inside the polygon
-  let commands = split(pathData, ' '); // Split path data
-  let currentPos = createVector(0, 0); // Store the current position for relative commands
-
-  for (let i = 0, j = commands.length - 1; i < commands.length; j = i++) {
-    let command = commands[i];
-
-    // Check for commands and parse accordingly
-    let coords;
-    if (command.startsWith('M') || command.startsWith('L') || command.startsWith('C')) {
-      coords = command.substring(1).split(',').map(parseFloat);
-    } else if (command.startsWith('m') || command.startsWith('l') || command.startsWith('c')) {
-      coords = command.substring(1).split(',').map(parseFloat);
-      // For relative commands, add currentPos to the coordinates
-      for (let k = 0; k < coords.length; k += 2) {
-        coords[k] += currentPos.x; // Update x coordinate
-        coords[k + 1] += currentPos.y; // Update y coordinate
-      }
-    } else if (command === 'Z' || command === 'z') {
-      // Skip processing for Z command, it's only for closing the path
-      continue;
-    } else {
-      console.warn(`Invalid path command: ${command}`);
-      continue; // Skip invalid commands
-    }
-
-    // Validate coords length
-    if (coords.length < 2) {
-      console.warn(`Invalid coordinates for path command: ${command}`);
-      continue; // Skip invalid coordinates
-    }
-
-    let xi = coords[0];
-    let yi = coords[1];
-    currentPos.set(xi, yi); // Update current position
-
-    let xj = (j >= 0) ? commands[j].substring(1).split(',').map(parseFloat)[0] : xi;
-    let yj = (j >= 0) ? commands[j].substring(1).split(',').map(parseFloat)[1] : yi;
+  // Using ray-casting algorithm to check if mouse is inside the polygon
+  for (let i = 0, j = vertices.length - 1; i < vertices.length; j = i++) {
+    let xi = vertices[i].x, yi = vertices[i].y;
+    let xj = vertices[j].x, yj = vertices[j].y;
 
     let intersect = ((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
     if (intersect) inside = !inside;
@@ -210,20 +136,13 @@ function isMouseInRegion(region) {
   return inside;
 }
 
-function handleKeyPress(event) {
-  if (event.key === "Enter") {
-    checkAnswer(); // Call the answer check function when Enter is pressed
-  }
-}
-
 function checkAnswer() {
   let answer = document.getElementById("answer").value;
   if (selectedRegion && answer === selectedRegion.name) {
-    selectedRegion.state = "correct"; // Turn green if correct
     document.getElementById("feedback").innerText = "Correct!";
-  } else if (selectedRegion) {
-    selectedRegion.state = "incorrect"; // Turn red if incorrect
+  } else {
     document.getElementById("feedback").innerText = "Try again.";
   }
   document.getElementById("answer").value = ""; // Clear input
 }
+
